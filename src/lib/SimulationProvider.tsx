@@ -35,6 +35,13 @@ const initialState: SimulationData = {
   bank: '',
   pixKey: '',
   pixKeyType: '',
+  seguroPrice: 0,
+  seguroExtra: 0,
+  checkoutProductId: '',
+  checkoutNext: '',
+  checkoutTotal: 0,
+  checkoutLoan: 0,
+  checkoutBumpIds: [],
 }
 
 export function SimulationProvider({ children }: { children: ReactNode }) {

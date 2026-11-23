@@ -2,27 +2,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { formatCpf, formatPhone, onlyDigits } from '../lib/formatters'
+import { formatCpf, formatPhone, isValidCpf, onlyDigits } from '../lib/formatters'
 import { formatBRL } from '../lib/loan'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
-
-const BANKS = [
-  'Banco do Brasil',
-  'Banco Santander',
-  'Caixa Econômica Federal',
-  'Banco Bradesco',
-  'Itaú Unibanco',
-  'NuBank',
-  'Banco C6',
-  'Banco Inter',
-  'Banco BTG Pactual',
-  'Banco Safra',
-  'Banco Original',
-  'Banco Neon',
-  'Banco Pan',
-  'PicPay',
-  'Mercado Pago',
-]
+import { BankCombobox } from './BankCombobox'
 
 const KEY_TYPES = [
   {
@@ -30,14 +13,14 @@ const KEY_TYPES = [
     label: 'CPF',
     placeholder: '000.000.000-00',
     inputMode: 'numeric' as const,
-    errorHint: 'Informe um CPF com 11 dígitos.',
+    errorHint: 'Informe um CPF válido.',
   },
   {
     id: 'telefone',
     label: 'Telefone',
     placeholder: '(00) 00000-0000',
     inputMode: 'tel' as const,
-    errorHint: 'Informe um telefone com DDD.',
+    errorHint: 'Informe um telefone válido com DDD.',
   },
   {
     id: 'email',
@@ -51,11 +34,26 @@ const KEY_TYPES = [
     label: 'Aleatória',
     placeholder: 'Cole sua chave aleatória',
     inputMode: 'text' as const,
-    errorHint: '',
+    errorHint: 'Informe uma chave aleatória válida.',
   },
 ]
 
-const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+const isEmailValid = (value: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+
+const isPhoneValid = (value: string) => {
+  const digits = onlyDigits(value)
+  if (digits.length !== 10 && digits.length !== 11) return false
+  const ddd = Number(digits.slice(0, 2))
+  if (ddd < 11 || ddd > 99) return false
+  if (digits.length === 11) return digits[2] === '9'
+  return true
+}
+
+const isRandomKeyValid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value.trim(),
+  )
 
 type PixWithdrawSheetProps = {
   open: boolean
@@ -92,15 +90,6 @@ export function PixWithdrawSheet({
 
   useLockBodyScroll(open)
 
-  useEffect(() => {
-    if (!open) return
-    setPhase('form')
-    setShowErrors(false)
-    setBank(initialBank)
-    setKeyType(initialPixKeyType)
-    setPixKey(initialPixKey)
-  }, [open, initialBank, initialPixKeyType, initialPixKey])
-
   useEffect(
     () => () => {
       if (timer.current) window.clearTimeout(timer.current)
@@ -112,13 +101,13 @@ export function PixWithdrawSheet({
 
   const keyValid =
     keyType === 'cpf'
-      ? onlyDigits(pixKey).length === 11
+      ? isValidCpf(pixKey)
       : keyType === 'telefone'
-        ? onlyDigits(pixKey).length >= 10
+        ? isPhoneValid(pixKey)
         : keyType === 'email'
           ? isEmailValid(pixKey)
           : keyType === 'aleatoria'
-            ? pixKey.trim().length > 0
+            ? isRandomKeyValid(pixKey)
             : false
 
   const bankValid = bank.trim().length > 0
@@ -162,7 +151,7 @@ export function PixWithdrawSheet({
     timer.current = window.setTimeout(() => {
       setPhase('success')
       onComplete(payload)
-    }, 2400)
+    }, 2600)
   }
 
   return (
@@ -225,24 +214,11 @@ export function PixWithdrawSheet({
                 <label className="block text-white/60 text-sm mb-2 mt-6">
                   Seu banco
                 </label>
-                <select
+                <BankCombobox
                   value={bank}
-                  onChange={(event) => setBank(event.target.value)}
-                  className={`w-full h-14 rounded-xl bg-white/5 border-2 px-4 text-white outline-none transition-colors ${
-                    bankError
-                      ? 'border-red-500/70'
-                      : 'border-white/10 focus:border-primary'
-                  }`}
-                >
-                  <option value="" className="bg-[#0f1712]">
-                    Selecione seu banco
-                  </option>
-                  {BANKS.map((option) => (
-                    <option key={option} value={option} className="bg-[#0f1712]">
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setBank}
+                  error={Boolean(bankError)}
+                />
                 {bankError ? (
                   <p className="text-red-400 text-xs mt-2 mb-6">{bankError}</p>
                 ) : (

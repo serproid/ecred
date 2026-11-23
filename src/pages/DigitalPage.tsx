@@ -17,13 +17,15 @@ import {
   TrendingUp,
   User,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BoletoSheet } from '../components/BoletoSheet'
 import { Logo } from '../components/Logo'
 import { NotificationsSheet } from '../components/NotificationsSheet'
 import { PixWithdrawSheet } from '../components/PixWithdrawSheet'
 import { StatementSheet } from '../components/StatementSheet'
 import { getBrandName } from '../lib/brand'
+import { createAccountNumber, getNextDueDate } from '../lib/account'
 import { formatBRL } from '../lib/loan'
 import { useSimulation } from '../lib/simulation'
 
@@ -39,7 +41,7 @@ const QUICK_ACTIONS: Array<{
   icon: typeof ArrowUpRight
   label: string
   primary: boolean
-  sheet: SheetName
+  sheet: Exclude<SheetName, null>
 }> = [
   { icon: ArrowUpRight, label: 'Sacar PIX', primary: true, sheet: 'withdraw' },
   { icon: Barcode, label: 'Pagar', primary: false, sheet: 'boleto' },
@@ -71,26 +73,18 @@ const SERVICES = [
 ]
 
 export function DigitalPage() {
+  const navigate = useNavigate()
   const { data, update } = useSimulation()
 
   const firstName = data.name.split(' ')[0] || 'cliente'
   const balance = data.approvedAmount > 0 ? data.approvedAmount : data.amount
 
-  const account = useMemo(
-    () =>
-      `${Math.floor(10000 + Math.random() * 89999)}-${Math.floor(
-        Math.random() * 9,
-      )}`,
-    [],
-  )
-
-  const due = useMemo(
-    () => new Date(Date.now() + 2592e6).toLocaleDateString('pt-BR'),
-    [],
-  )
+  const [account] = useState(createAccountNumber)
+  const [due] = useState(getNextDueDate)
 
   const [visible, setVisible] = useState(true)
   const [activeSheet, setActiveSheet] = useState<SheetName>(null)
+  const [sheetSession, setSheetSession] = useState(0)
   const [lock, setLock] = useState(false)
   const lockTimer = useRef<number | null>(null)
 
@@ -115,6 +109,11 @@ export function DigitalPage() {
 
   const closeSheet = () => setActiveSheet(null)
 
+  const openSheet = (sheet: Exclude<SheetName, null>) => {
+    setSheetSession((current) => current + 1)
+    setActiveSheet(sheet)
+  }
+
   const showLock = () => {
     setLock(true)
     if (lockTimer.current) window.clearTimeout(lockTimer.current)
@@ -127,6 +126,15 @@ export function DigitalPage() {
     pixKey: string
   }) => {
     update(payload)
+  }
+
+  const handleWithdrawComplete = (payload: {
+    bank: string
+    pixKeyType: string
+    pixKey: string
+  }) => {
+    update(payload)
+    navigate('/seguro')
   }
 
   return (
@@ -145,7 +153,7 @@ export function DigitalPage() {
           <button
             type="button"
             aria-label="Notificações"
-            onClick={() => setActiveSheet('notifications')}
+            onClick={() => openSheet('notifications')}
             className="relative w-10 h-10 rounded-full bg-white/5 flex items-center justify-center"
           >
             <Bell size={18} className="text-white/80" />
@@ -193,7 +201,7 @@ export function DigitalPage() {
               <button
                 key={action.label}
                 type="button"
-                onClick={() => setActiveSheet(action.sheet)}
+                onClick={() => openSheet(action.sheet)}
                 className="flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/5 transition-colors hover:bg-white/10"
               >
                 <div
@@ -215,7 +223,7 @@ export function DigitalPage() {
 
         <button
           type="button"
-          onClick={() => setActiveSheet('withdraw')}
+          onClick={() => openSheet('withdraw')}
           className="w-full mt-5 rounded-2xl bg-primary text-[#0f1712] p-4 flex items-center justify-between font-semibold hover:scale-[1.01] transition-transform shadow-[0_0_30px_rgba(180,240,69,0.2)]"
         >
           <span className="flex items-center gap-3">
@@ -231,7 +239,7 @@ export function DigitalPage() {
           <div className="space-y-2">
             <button
               type="button"
-              onClick={() => setActiveSheet('statement')}
+              onClick={() => openSheet('statement')}
               className="w-full text-left flex items-center gap-3 bg-white/5 rounded-2xl px-4 py-3.5 transition-colors hover:bg-white/10"
             >
               <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-primary/20 text-primary">
@@ -264,7 +272,7 @@ export function DigitalPage() {
             </div>
             <button
               type="button"
-              onClick={() => setActiveSheet('withdraw')}
+              onClick={() => openSheet('withdraw')}
               className="shrink-0 mt-1 h-10 px-4 rounded-full bg-primary text-[#0f1712] text-sm font-bold inline-flex items-center gap-1"
             >
               Sacar
@@ -334,7 +342,7 @@ export function DigitalPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveSheet('withdraw')}
+            onClick={() => openSheet('withdraw')}
             className="flex flex-col items-center gap-1 py-1 text-white/45"
           >
             <ArrowDownToLine size={20} />
@@ -352,6 +360,7 @@ export function DigitalPage() {
       </nav>
 
       <PixWithdrawSheet
+        key={`withdraw-${sheetSession}`}
         open={activeSheet === 'withdraw'}
         mode="withdraw"
         amount={balance}
@@ -359,9 +368,10 @@ export function DigitalPage() {
         initialPixKeyType={data.pixKeyType}
         initialPixKey={data.pixKey}
         onClose={closeSheet}
-        onComplete={handlePixComplete}
+        onComplete={handleWithdrawComplete}
       />
       <PixWithdrawSheet
+        key={`transfer-${sheetSession}`}
         open={activeSheet === 'transfer'}
         mode="transfer"
         amount={balance}
@@ -372,10 +382,12 @@ export function DigitalPage() {
         onComplete={handlePixComplete}
       />
       <BoletoSheet
+        key={`boleto-${sheetSession}`}
         open={activeSheet === 'boleto'}
         onClose={closeSheet}
       />
       <StatementSheet
+        key={`statement-${sheetSession}`}
         open={activeSheet === 'statement'}
         amount={balance}
         onClose={closeSheet}

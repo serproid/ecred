@@ -26,14 +26,6 @@ export function BoletoSheet({ open, onClose }: BoletoSheetProps) {
 
   useLockBodyScroll(open)
 
-  useEffect(() => {
-    if (open) {
-      setPhase('form')
-      setTouched(false)
-      setCode('')
-    }
-  }, [open])
-
   useEffect(
     () => () => {
       if (timer.current) window.clearTimeout(timer.current)

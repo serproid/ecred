@@ -32,6 +32,13 @@ export type SimulationData = {
   bank: string
   pixKey: string
   pixKeyType: string
+  seguroPrice: number
+  seguroExtra: number
+  checkoutProductId: string
+  checkoutNext: string
+  checkoutTotal: number
+  checkoutLoan: number
+  checkoutBumpIds: string[]
 }
 
 export type SimulationContextValue = {
