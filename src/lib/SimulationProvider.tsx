@@ -14,6 +14,8 @@ const initialState: SimulationData = {
   motherName: '',
   phone: '',
   purpose: '',
+  occupation: '',
+  negativado: '',
 }
 
 export function SimulationProvider({ children }: { children: ReactNode }) {

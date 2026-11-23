@@ -11,6 +11,8 @@ export type SimulationData = {
   motherName: string
   phone: string
   purpose: string
+  occupation: string
+  negativado: string
 }
 
 export type SimulationContextValue = {

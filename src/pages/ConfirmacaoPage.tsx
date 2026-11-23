@@ -6,9 +6,10 @@ import {
   Lock,
 } from 'lucide-react'
 import { useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
+import { OptionCard } from '../components/OptionCard'
 import { ProgressBar } from '../components/ProgressBar'
 import {
   formatCpf,
@@ -34,41 +35,6 @@ function FieldError({ message }: { message: string }) {
     <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
       <CircleAlert size={14} className="shrink-0" /> {message}
     </p>
-  )
-}
-
-function GenderOption({
-  selected,
-  onClick,
-  children,
-}: {
-  selected: boolean
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full text-left px-5 py-4 rounded-2xl border-2 font-medium transition-all duration-200 flex items-center justify-between gap-3 ${
-        selected
-          ? 'border-primary bg-primary/10 text-foreground shadow-[0_0_0_4px_rgba(180,240,69,0.12)]'
-          : 'border-border bg-card text-foreground hover:border-[#2e5535]/40 hover:bg-muted/40'
-      }`}
-    >
-      {children}
-      <span
-        className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-          selected
-            ? 'border-primary bg-primary'
-            : 'border-border bg-transparent'
-        }`}
-      >
-        {selected ? (
-          <span className="w-2 h-2 rounded-full bg-[#0f1712]" />
-        ) : null}
-      </span>
-    </button>
   )
 }
 
@@ -237,18 +203,18 @@ export function ConfirmacaoPage() {
                     Gênero
                   </label>
                   <div className="grid grid-cols-2 gap-4">
-                    <GenderOption
+                    <OptionCard
                       selected={data.gender === 'feminino'}
                       onClick={() => update({ gender: 'feminino' })}
                     >
                       Feminino
-                    </GenderOption>
-                    <GenderOption
+                    </OptionCard>
+                    <OptionCard
                       selected={data.gender === 'masculino'}
                       onClick={() => update({ gender: 'masculino' })}
                     >
                       Masculino
-                    </GenderOption>
+                    </OptionCard>
                   </div>
                   <FieldError message={errorFor('gender')} />
                 </div>
