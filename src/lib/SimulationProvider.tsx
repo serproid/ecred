@@ -16,6 +16,9 @@ const initialState: SimulationData = {
   purpose: '',
   occupation: '',
   negativado: '',
+  salary: '',
+  noIncome: false,
+  incomeDay: 0,
 }
 
 export function SimulationProvider({ children }: { children: ReactNode }) {

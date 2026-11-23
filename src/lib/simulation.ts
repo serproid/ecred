@@ -13,6 +13,9 @@ export type SimulationData = {
   purpose: string
   occupation: string
   negativado: string
+  salary: string
+  noIncome: boolean
+  incomeDay: number
 }
 
 export type SimulationContextValue = {

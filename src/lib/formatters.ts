@@ -25,6 +25,20 @@ export function formatPhone(value: string) {
     .replace(/(-\d{4})\d+?$/, '$1')
 }
 
+export function formatCurrencyInput(value: string) {
+  const digits = onlyDigits(value).slice(0, 12)
+  if (!digits) return ''
+  return (Number(digits) / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+export function parseCurrency(value: string) {
+  const digits = onlyDigits(value).slice(0, 12)
+  return digits ? Number(digits) / 100 : 0
+}
+
 export function isValidCpf(value: string) {
   const digits = onlyDigits(value)
   if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false

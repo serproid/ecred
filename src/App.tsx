@@ -4,6 +4,7 @@ import { ConfirmacaoPage } from './pages/ConfirmacaoPage'
 import { CpfPage } from './pages/CpfPage'
 import { DadosPage } from './pages/DadosPage'
 import { LandingPage } from './pages/LandingPage'
+import { RendaPage } from './pages/RendaPage'
 import { ValorPage } from './pages/ValorPage'
 
 export default function App() {
@@ -14,15 +15,16 @@ export default function App() {
       <Route path="/cpf" element={<CpfPage />} />
       <Route path="/confirmacao" element={<ConfirmacaoPage />} />
       <Route path="/dados" element={<DadosPage />} />
+      <Route path="/renda" element={<RendaPage />} />
       <Route
-        path="/renda"
+        path="/analise"
         element={
           <ComingSoonPage
-            eyebrow="Passo 5"
-            title="Qual a sua renda?"
-            subtitle="Isso nos ajuda a ajustar as parcelas ao seu orçamento."
-            progress={40}
-            backTo="/dados"
+            eyebrow="Passo 6"
+            title="Analisando seu perfil"
+            subtitle="Estamos buscando a melhor oferta para você."
+            progress={50}
+            backTo="/renda"
           />
         }
       />
