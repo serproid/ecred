@@ -51,6 +51,50 @@ function extractPix(payload: any) {
   return { code: String(code), image }
 }
 
+async function createHostedCheckout(
+  env: Env,
+  origin: string,
+  amount: number,
+  identifier: string,
+) {
+  const payload = {
+    product: {
+      externalId: identifier,
+      name: 'Pagamento Ecred',
+      offer: {
+        name: 'Pagamento Ecred',
+        price: amount,
+        offerType: 'NATIONAL',
+        currency: 'BRL',
+      },
+    },
+    settings: {
+      askForAddress: false,
+      paymentMethods: ['PIX'],
+      thankYouPage: `${origin}/digital`,
+    },
+  }
+
+  try {
+    const response = await sigiloFetch(env, '/gateway/checkout', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(45000),
+    })
+    const text = await response.text()
+    let data: any = null
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = null
+    }
+    if (!response.ok || !data?.checkoutUrl) return null
+    return String(data.checkoutUrl)
+  } catch {
+    return null
+  }
+}
+
 async function createPix(request: Request, env: Env) {
   if (!env.SIGILOPAY_PUBLIC_KEY || !env.SIGILOPAY_SECRET_KEY) {
     return json({ error: 'SigiloPay não configurado.' }, 500)
@@ -116,25 +160,42 @@ async function createPix(request: Request, env: Env) {
     data = null
   }
 
-  if (!response.ok || !data) {
-    return json(
-      {
-        error: data?.message ?? 'Não foi possível gerar o PIX.',
-        details: data?.details,
-      },
-      502,
-    )
+  const { code, image } = extractPix(data ?? {})
+
+  if (response.ok && data && code) {
+    return json({
+      transactionId: data.transactionId ?? data.id ?? '',
+      identifier,
+      amount: payload.amount,
+      code,
+      image,
+    })
   }
 
-  const { code, image } = extractPix(data)
-
-  return json({
-    transactionId: data.transactionId ?? data.id ?? '',
+  const origin = new URL(request.url).origin
+  const checkoutUrl = await createHostedCheckout(
+    env,
+    origin,
+    payload.amount,
     identifier,
-    amount: payload.amount,
-    code,
-    image,
-  })
+  )
+
+  if (checkoutUrl) {
+    return json({
+      checkoutUrl,
+      identifier,
+      amount: payload.amount,
+      fallback: true,
+    })
+  }
+
+  return json(
+    {
+      error: data?.message ?? 'Não foi possível gerar o PIX.',
+      details: data?.details,
+    },
+    502,
+  )
 }
 
 async function pixStatus(url: URL, env: Env) {

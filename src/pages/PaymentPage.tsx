@@ -79,10 +79,21 @@ export function PaymentPage() {
         const payload = await response.json()
         if (cancelled) return
 
-        if (!response.ok || !payload?.code) {
+        if (!response.ok) {
           setErrorMessage(
             payload?.error ?? 'Não foi possível gerar o PIX. Tente novamente.',
           )
+          setPhase('error')
+          return
+        }
+
+        if (payload?.checkoutUrl) {
+          window.location.assign(String(payload.checkoutUrl))
+          return
+        }
+
+        if (!payload?.code) {
+          setErrorMessage('Não foi possível gerar o PIX. Tente novamente.')
           setPhase('error')
           return
         }
