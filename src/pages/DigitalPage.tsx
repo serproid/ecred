@@ -18,40 +18,59 @@ import {
   User,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { BoletoSheet } from '../components/BoletoSheet'
 import { Logo } from '../components/Logo'
+import { NotificationsSheet } from '../components/NotificationsSheet'
 import { PixWithdrawSheet } from '../components/PixWithdrawSheet'
+import { StatementSheet } from '../components/StatementSheet'
 import { getBrandName } from '../lib/brand'
 import { formatBRL } from '../lib/loan'
 import { useSimulation } from '../lib/simulation'
 
-const QUICK_ACTIONS = [
-  { icon: ArrowUpRight, label: 'Sacar PIX', primary: true },
-  { icon: Barcode, label: 'Pagar', primary: false },
-  { icon: ArrowRightLeft, label: 'Transferir', primary: false },
-  { icon: Receipt, label: 'Extrato', primary: false },
+type SheetName =
+  | 'withdraw'
+  | 'transfer'
+  | 'boleto'
+  | 'statement'
+  | 'notifications'
+  | null
+
+const QUICK_ACTIONS: Array<{
+  icon: typeof ArrowUpRight
+  label: string
+  primary: boolean
+  sheet: SheetName
+}> = [
+  { icon: ArrowUpRight, label: 'Sacar PIX', primary: true, sheet: 'withdraw' },
+  { icon: Barcode, label: 'Pagar', primary: false, sheet: 'boleto' },
+  {
+    icon: ArrowRightLeft,
+    label: 'Transferir',
+    primary: false,
+    sheet: 'transfer',
+  },
+  { icon: Receipt, label: 'Extrato', primary: false, sheet: 'statement' },
 ]
 
 const SERVICES = [
   {
-    title: 'CartÃµes',
-    desc: 'CartÃ£o sem anuidade, com limite prÃ©-aprovado',
+    title: 'Cartões',
+    desc: 'Cartão sem anuidade, com limite pré-aprovado',
     icon: CreditCard,
   },
   {
-    title: 'EmprÃ©stimos',
+    title: 'Empréstimos',
     desc: 'Gerencie ou solicite novos valores',
     icon: Percent,
   },
   {
     title: 'Investimentos',
-    desc: 'FaÃ§a o saldo render 100% do CDI',
+    desc: 'Faça o saldo render 100% do CDI',
     icon: TrendingUp,
   },
 ]
 
 export function DigitalPage() {
-  const navigate = useNavigate()
   const { data, update } = useSimulation()
 
   const firstName = data.name.split(' ')[0] || 'cliente'
@@ -71,7 +90,7 @@ export function DigitalPage() {
   )
 
   const [visible, setVisible] = useState(true)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [activeSheet, setActiveSheet] = useState<SheetName>(null)
   const [lock, setLock] = useState(false)
   const lockTimer = useRef<number | null>(null)
 
@@ -94,7 +113,7 @@ export function DigitalPage() {
     [],
   )
 
-  const openSheet = () => setSheetOpen(true)
+  const closeSheet = () => setActiveSheet(null)
 
   const showLock = () => {
     setLock(true)
@@ -102,13 +121,12 @@ export function DigitalPage() {
     lockTimer.current = window.setTimeout(() => setLock(false), 2800)
   }
 
-  const handleConfirmWithdraw = (payload: {
+  const handlePixComplete = (payload: {
     bank: string
     pixKeyType: string
     pixKey: string
   }) => {
     update(payload)
-    navigate('/seguro')
   }
 
   return (
@@ -126,7 +144,8 @@ export function DigitalPage() {
           </div>
           <button
             type="button"
-            aria-label="NotificaÃ§Ãµes"
+            aria-label="Notificações"
+            onClick={() => setActiveSheet('notifications')}
             className="relative w-10 h-10 rounded-full bg-white/5 flex items-center justify-center"
           >
             <Bell size={18} className="text-white/80" />
@@ -143,7 +162,7 @@ export function DigitalPage() {
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2 text-white/60 text-sm">
-                <Logo variant="dark" className="text-base" /> Â· Conta
+                <Logo variant="dark" className="text-base" /> · Conta
               </div>
               <button
                 type="button"
@@ -155,11 +174,11 @@ export function DigitalPage() {
               </button>
             </div>
             <p className="text-white/50 text-xs mb-1">
-              Ag. 0001 Â· Conta {account}
+              Ag. 0001 · Conta {account}
             </p>
-            <p className="text-white/60 text-sm mt-4 mb-1">Saldo disponÃ­vel</p>
+            <p className="text-white/60 text-sm mt-4 mb-1">Saldo disponível</p>
             <div className="text-4xl font-black tracking-tight">
-              {visible ? formatBRL(balance) : 'R$ â€¢â€¢â€¢â€¢â€¢â€¢'}
+              {visible ? formatBRL(balance) : 'R$ ••••••'}
             </div>
             <p className="text-primary text-xs mt-3 font-medium">
               Rendendo 100% do CDI
@@ -174,7 +193,7 @@ export function DigitalPage() {
               <button
                 key={action.label}
                 type="button"
-                onClick={openSheet}
+                onClick={() => setActiveSheet(action.sheet)}
                 className="flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/5 transition-colors hover:bg-white/10"
               >
                 <div
@@ -196,7 +215,7 @@ export function DigitalPage() {
 
         <button
           type="button"
-          onClick={openSheet}
+          onClick={() => setActiveSheet('withdraw')}
           className="w-full mt-5 rounded-2xl bg-primary text-[#0f1712] p-4 flex items-center justify-between font-semibold hover:scale-[1.01] transition-transform shadow-[0_0_30px_rgba(180,240,69,0.2)]"
         >
           <span className="flex items-center gap-3">
@@ -207,12 +226,12 @@ export function DigitalPage() {
 
         <div className="mt-8">
           <h2 className="text-sm font-semibold text-white/60 mb-3">
-            MovimentaÃ§Ãµes
+            Movimentações
           </h2>
           <div className="space-y-2">
             <button
               type="button"
-              onClick={openSheet}
+              onClick={() => setActiveSheet('statement')}
               className="w-full text-left flex items-center gap-3 bg-white/5 rounded-2xl px-4 py-3.5 transition-colors hover:bg-white/10"
             >
               <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-primary/20 text-primary">
@@ -220,7 +239,7 @@ export function DigitalPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">
-                  EmprÃ©stimo {getBrandName()}
+                  Empréstimo {getBrandName()}
                 </p>
                 <p className="text-white/50 text-xs">Valor liberado</p>
               </div>
@@ -237,15 +256,15 @@ export function DigitalPage() {
         <section className="mt-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold">Seu emprÃ©stimo</h2>
-              <p className="text-white/45 text-xs mt-3">Valor disponÃ­vel</p>
+              <h2 className="text-base font-semibold">Seu empréstimo</h2>
+              <p className="text-white/45 text-xs mt-3">Valor disponível</p>
               <p className="text-2xl font-black tracking-tight mt-1">
-                {visible ? formatBRL(balance) : 'R$ â€¢â€¢â€¢â€¢â€¢â€¢'}
+                {visible ? formatBRL(balance) : 'R$ ••••••'}
               </p>
             </div>
             <button
               type="button"
-              onClick={openSheet}
+              onClick={() => setActiveSheet('withdraw')}
               className="shrink-0 mt-1 h-10 px-4 rounded-full bg-primary text-[#0f1712] text-sm font-bold inline-flex items-center gap-1"
             >
               Sacar
@@ -253,16 +272,16 @@ export function DigitalPage() {
             </button>
           </div>
           <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between gap-3 text-sm">
-            <span className="text-white/45">PrÃ³ximo vencimento</span>
+            <span className="text-white/45">Próximo vencimento</span>
             <span className="font-semibold text-right">
-              {visible ? `${due} Â· parcela em dia` : 'â€¢â€¢/â€¢â€¢/â€¢â€¢â€¢â€¢â€¢â€¢'}
+              {visible ? `${due} · parcela em dia` : '••/••/••••••'}
             </span>
           </div>
         </section>
 
         <section className="mt-6">
           <h2 className="text-sm font-semibold text-white/60 mb-3">
-            ServiÃ§os da conta
+            Serviços da conta
           </h2>
           <div className="space-y-2">
             {SERVICES.map((service) => {
@@ -296,7 +315,7 @@ export function DigitalPage() {
           }`}
         >
           <div className="rounded-2xl bg-primary px-5 py-3 text-center text-sm font-semibold text-[#0f1712] shadow-lg">
-            Para liberar esta funÃ§Ã£o, faÃ§a o saque via PIX primeiro
+            Para liberar esta função, faça o saque via PIX primeiro
           </div>
         </div>
       </div>
@@ -311,11 +330,11 @@ export function DigitalPage() {
             className="flex flex-col items-center gap-1 py-1 text-primary"
           >
             <House size={20} />
-            <span className="text-[11px] font-semibold">InÃ­cio</span>
+            <span className="text-[11px] font-semibold">Início</span>
           </button>
           <button
             type="button"
-            onClick={openSheet}
+            onClick={() => setActiveSheet('withdraw')}
             className="flex flex-col items-center gap-1 py-1 text-white/45"
           >
             <ArrowDownToLine size={20} />
@@ -333,13 +352,38 @@ export function DigitalPage() {
       </nav>
 
       <PixWithdrawSheet
-        open={sheetOpen}
+        open={activeSheet === 'withdraw'}
+        mode="withdraw"
         amount={balance}
         initialBank={data.bank}
         initialPixKeyType={data.pixKeyType}
         initialPixKey={data.pixKey}
-        onClose={() => setSheetOpen(false)}
-        onConfirm={handleConfirmWithdraw}
+        onClose={closeSheet}
+        onComplete={handlePixComplete}
+      />
+      <PixWithdrawSheet
+        open={activeSheet === 'transfer'}
+        mode="transfer"
+        amount={balance}
+        initialBank={data.bank}
+        initialPixKeyType={data.pixKeyType}
+        initialPixKey={data.pixKey}
+        onClose={closeSheet}
+        onComplete={handlePixComplete}
+      />
+      <BoletoSheet
+        open={activeSheet === 'boleto'}
+        onClose={closeSheet}
+      />
+      <StatementSheet
+        open={activeSheet === 'statement'}
+        amount={balance}
+        onClose={closeSheet}
+      />
+      <NotificationsSheet
+        open={activeSheet === 'notifications'}
+        amount={balance}
+        onClose={closeSheet}
       />
     </div>
   )

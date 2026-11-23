@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Loader2, X } from 'lucide-react'
+import { Check, Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { formatCpf, formatPhone, onlyDigits } from '../lib/formatters'
 import { formatBRL } from '../lib/loan'
+import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 
 const BANKS = [
   'Banco do Brasil',
@@ -58,12 +59,13 @@ const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 
 type PixWithdrawSheetProps = {
   open: boolean
+  mode?: 'withdraw' | 'transfer'
   amount: number
   initialBank: string
   initialPixKeyType: string
   initialPixKey: string
   onClose: () => void
-  onConfirm: (payload: {
+  onComplete: (payload: {
     bank: string
     pixKeyType: string
     pixKey: string
@@ -72,23 +74,27 @@ type PixWithdrawSheetProps = {
 
 export function PixWithdrawSheet({
   open,
+  mode = 'withdraw',
   amount,
   initialBank,
   initialPixKeyType,
   initialPixKey,
   onClose,
-  onConfirm,
+  onComplete,
 }: PixWithdrawSheetProps) {
-  const [mode, setMode] = useState<'form' | 'processing'>('form')
+  const isTransfer = mode === 'transfer'
+  const [phase, setPhase] = useState<'form' | 'processing' | 'success'>('form')
   const [bank, setBank] = useState(initialBank)
   const [keyType, setKeyType] = useState(initialPixKeyType)
   const [pixKey, setPixKey] = useState(initialPixKey)
   const [showErrors, setShowErrors] = useState(false)
   const timer = useRef<number | null>(null)
 
+  useLockBodyScroll(open)
+
   useEffect(() => {
     if (!open) return
-    setMode('form')
+    setPhase('form')
     setShowErrors(false)
     setBank(initialBank)
     setKeyType(initialPixKeyType)
@@ -101,15 +107,6 @@ export function PixWithdrawSheet({
     },
     [],
   )
-
-  useEffect(() => {
-    if (!open) return
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previous
-    }
-  }, [open])
 
   const selectedType = KEY_TYPES.find((item) => item.id === keyType) ?? null
 
@@ -160,10 +157,12 @@ export function PixWithdrawSheet({
     setShowErrors(true)
     if (!canSubmit) return
 
-    setMode('processing')
+    const payload = { bank, pixKeyType: keyType, pixKey: pixKey.trim() }
+    setPhase('processing')
     timer.current = window.setTimeout(() => {
-      onConfirm({ bank, pixKeyType: keyType, pixKey: pixKey.trim() })
-    }, 2600)
+      setPhase('success')
+      onComplete(payload)
+    }, 2400)
   }
 
   return (
@@ -175,23 +174,25 @@ export function PixWithdrawSheet({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => {
-            if (mode !== 'processing') onClose()
+            if (phase !== 'processing') onClose()
           }}
         >
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Sacar via PIX"
+            aria-label={isTransfer ? 'Transferir via PIX' : 'Sacar via PIX'}
             className="bg-[#0f1712] border border-white/10 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto"
             initial={{ y: 60, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 60, opacity: 0 }}
             onClick={(event) => event.stopPropagation()}
           >
-            {mode === 'form' ? (
+            {phase === 'form' ? (
               <form onSubmit={handleSubmit}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold">Sacar via PIX</h3>
+                  <h3 className="text-xl font-bold">
+                    {isTransfer ? 'Transferir via PIX' : 'Sacar via PIX'}
+                  </h3>
                   <button
                     type="button"
                     aria-label="Fechar"
@@ -202,14 +203,18 @@ export function PixWithdrawSheet({
                   </button>
                 </div>
 
-                <p className="text-white/60 text-sm mb-2">Valor do saque</p>
+                <p className="text-white/60 text-sm mb-2">
+                  {isTransfer ? 'Valor da transferência' : 'Valor do saque'}
+                </p>
                 <div className="rounded-2xl bg-primary/10 border border-primary/20 px-5 py-4 mb-2 flex items-center justify-between gap-3">
                   <div>
                     <div className="text-3xl font-black text-primary leading-none">
                       {formatBRL(amount)}
                     </div>
                     <p className="text-white/50 text-xs mt-2">
-                      Todo o seu saldo disponível
+                      {isTransfer
+                        ? 'Disponível para transferir'
+                        : 'Todo o seu saldo disponível'}
                     </p>
                   </div>
                   <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-[#0f1712] bg-primary rounded-full px-3 py-1">
@@ -224,7 +229,9 @@ export function PixWithdrawSheet({
                   value={bank}
                   onChange={(event) => setBank(event.target.value)}
                   className={`w-full h-14 rounded-xl bg-white/5 border-2 px-4 text-white outline-none transition-colors ${
-                    bankError ? 'border-red-500/70' : 'border-white/10 focus:border-primary'
+                    bankError
+                      ? 'border-red-500/70'
+                      : 'border-white/10 focus:border-primary'
                   }`}
                 >
                   <option value="" className="bg-[#0f1712]">
@@ -244,9 +251,7 @@ export function PixWithdrawSheet({
                   </p>
                 )}
 
-                <p className="text-white/60 text-sm mb-3">
-                  Tipo de chave PIX
-                </p>
+                <p className="text-white/60 text-sm mb-3">Tipo de chave PIX</p>
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {KEY_TYPES.map((type) => (
                     <button
@@ -286,7 +291,9 @@ export function PixWithdrawSheet({
                   }
                   autoComplete="off"
                   className={`w-full h-14 rounded-xl bg-white/5 border-2 px-4 text-white placeholder:text-white/30 outline-none transition-colors ${
-                    keyError ? 'border-red-500/70' : 'border-white/10 focus:border-primary'
+                    keyError
+                      ? 'border-red-500/70'
+                      : 'border-white/10 focus:border-primary'
                   } ${keyType ? '' : 'opacity-50 cursor-not-allowed'}`}
                 />
                 {keyError ? (
@@ -303,18 +310,49 @@ export function PixWithdrawSheet({
                   type="submit"
                   className="w-full h-14 rounded-full font-bold text-lg bg-primary text-[#0f1712] hover:bg-primary/90 transition-colors"
                 >
-                  Confirmar saque
+                  {isTransfer ? 'Confirmar transferência' : 'Confirmar saque'}
                 </button>
               </form>
-            ) : (
+            ) : null}
+
+            {phase === 'processing' ? (
               <div className="py-16 flex flex-col items-center text-center">
                 <Loader2 size={48} className="text-primary animate-spin mb-6" />
-                <h3 className="text-xl font-bold mb-2">Processando saque</h3>
+                <h3 className="text-xl font-bold mb-2">
+                  {isTransfer ? 'Transferindo' : 'Processando saque'}
+                </h3>
                 <p className="text-white/60 text-sm">
-                  Validando sua solicitação de PIX...
+                  {isTransfer
+                    ? 'Enviando o valor para a chave informada...'
+                    : 'Validando sua solicitação de PIX...'}
                 </p>
               </div>
-            )}
+            ) : null}
+
+            {phase === 'success' ? (
+              <div className="py-12 flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(180,240,69,0.4)]">
+                  <Check size={32} className="text-[#0f1712]" strokeWidth={3} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">
+                  {isTransfer
+                    ? 'Transferência enviada'
+                    : 'Saque solicitado com sucesso'}
+                </h3>
+                <p className="text-white/60 text-sm max-w-xs">
+                  {isTransfer
+                    ? 'O valor será enviado para a chave PIX informada.'
+                    : 'Você receberá o valor via PIX em instantes.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="mt-8 w-full h-14 rounded-full font-bold text-lg bg-primary text-[#0f1712] hover:bg-primary/90 transition-colors"
+                >
+                  Concluir
+                </button>
+              </div>
+            ) : null}
           </motion.div>
         </motion.div>
       ) : null}
