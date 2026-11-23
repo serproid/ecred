@@ -123,15 +123,35 @@ async function createPix(request: Request, env: Env) {
       `ecred_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
   )
 
+  const amountValue = Math.round(amount * 100) / 100
+  const products =
+    Array.isArray(body?.products) && body.products.length > 0
+      ? body.products
+      : [
+          {
+            id: 'pagamento-ecred',
+            name: 'Pagamento Ecred',
+            quantity: 1,
+            price: amountValue,
+          },
+        ]
+
+  const metadata =
+    body?.metadata && typeof body.metadata === 'object'
+      ? { provider: 'Ecred', orderId: identifier, ...body.metadata }
+      : { provider: 'Ecred', orderId: identifier }
+
   const payload: any = {
     identifier,
-    amount: Math.round(amount * 100) / 100,
+    amount: amountValue,
     client: {
       name: String(client.name ?? '').trim() || 'Cliente',
       email: String(client.email ?? ''),
       phone: String(client.phone ?? '').replace(/\D/g, ''),
       document,
     },
+    products,
+    metadata,
   }
 
   if (env.SIGILOPAY_CALLBACK_URL) {
