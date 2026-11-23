@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import { AbrindoPage } from './pages/AbrindoPage'
 import { AnalisePage } from './pages/AnalisePage'
 import { AprovacaoPage } from './pages/AprovacaoPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
@@ -26,15 +27,16 @@ export default function App() {
       <Route path="/dia" element={<DiaPage />} />
       <Route path="/endereco" element={<EnderecoPage />} />
       <Route path="/conta" element={<ContaPage />} />
+      <Route path="/abrir" element={<AbrindoPage />} />
       <Route
-        path="/abrir"
+        path="/digital"
         element={
           <ComingSoonPage
-            eyebrow="Tudo pronto"
-            title="Abrindo sua conta digital"
-            subtitle="Estamos preparando o seu acesso."
+            eyebrow="Conta digital"
+            title="Sua conta digital"
+            subtitle="Área do cliente."
             progress={100}
-            backTo="/conta"
+            backTo="/"
           />
         }
       />
