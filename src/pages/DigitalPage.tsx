@@ -1,8 +1,8 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from 'framer-motion'
 import {
-  ArrowDown,
   ArrowDownLeft,
-  ArrowLeftRight,
+  ArrowDownToLine,
+  ArrowRightLeft,
   ArrowUpRight,
   Barcode,
   Bell,
@@ -10,9 +10,9 @@ import {
   CreditCard,
   Eye,
   EyeOff,
-  HandCoins,
   House,
-  ReceiptText,
+  Percent,
+  Receipt,
   Send,
   TrendingUp,
   User,
@@ -28,24 +28,24 @@ import { useSimulation } from '../lib/simulation'
 const QUICK_ACTIONS = [
   { icon: ArrowUpRight, label: 'Sacar PIX', primary: true },
   { icon: Barcode, label: 'Pagar', primary: false },
-  { icon: ArrowLeftRight, label: 'Transferir', primary: false },
-  { icon: ReceiptText, label: 'Extrato', primary: false },
+  { icon: ArrowRightLeft, label: 'Transferir', primary: false },
+  { icon: Receipt, label: 'Extrato', primary: false },
 ]
 
 const SERVICES = [
   {
-    title: 'Cartões',
-    desc: 'Cartão sem anuidade, com limite pré-aprovado',
+    title: 'CartÃµes',
+    desc: 'CartÃ£o sem anuidade, com limite prÃ©-aprovado',
     icon: CreditCard,
   },
   {
-    title: 'Empréstimos',
+    title: 'EmprÃ©stimos',
     desc: 'Gerencie ou solicite novos valores',
-    icon: HandCoins,
+    icon: Percent,
   },
   {
     title: 'Investimentos',
-    desc: 'Faça o saldo render 100% do CDI',
+    desc: 'FaÃ§a o saldo render 100% do CDI',
     icon: TrendingUp,
   },
 ]
@@ -126,7 +126,7 @@ export function DigitalPage() {
           </div>
           <button
             type="button"
-            aria-label="Notificações"
+            aria-label="NotificaÃ§Ãµes"
             className="relative w-10 h-10 rounded-full bg-white/5 flex items-center justify-center"
           >
             <Bell size={18} className="text-white/80" />
@@ -143,7 +143,7 @@ export function DigitalPage() {
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2 text-white/60 text-sm">
-                <Logo variant="dark" className="text-base" /> · Conta
+                <Logo variant="dark" className="text-base" /> Â· Conta
               </div>
               <button
                 type="button"
@@ -155,11 +155,11 @@ export function DigitalPage() {
               </button>
             </div>
             <p className="text-white/50 text-xs mb-1">
-              Ag. 0001 · Conta {account}
+              Ag. 0001 Â· Conta {account}
             </p>
-            <p className="text-white/60 text-sm mt-4 mb-1">Saldo disponível</p>
+            <p className="text-white/60 text-sm mt-4 mb-1">Saldo disponÃ­vel</p>
             <div className="text-4xl font-black tracking-tight">
-              {visible ? formatBRL(balance) : 'R$ ••••••'}
+              {visible ? formatBRL(balance) : 'R$ â€¢â€¢â€¢â€¢â€¢â€¢'}
             </div>
             <p className="text-primary text-xs mt-3 font-medium">
               Rendendo 100% do CDI
@@ -207,7 +207,7 @@ export function DigitalPage() {
 
         <div className="mt-8">
           <h2 className="text-sm font-semibold text-white/60 mb-3">
-            Movimentações
+            MovimentaÃ§Ãµes
           </h2>
           <div className="space-y-2">
             <button
@@ -220,7 +220,7 @@ export function DigitalPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">
-                  Empréstimo {getBrandName()}
+                  EmprÃ©stimo {getBrandName()}
                 </p>
                 <p className="text-white/50 text-xs">Valor liberado</p>
               </div>
@@ -237,10 +237,10 @@ export function DigitalPage() {
         <section className="mt-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold">Seu empréstimo</h2>
-              <p className="text-white/45 text-xs mt-3">Valor disponível</p>
+              <h2 className="text-base font-semibold">Seu emprÃ©stimo</h2>
+              <p className="text-white/45 text-xs mt-3">Valor disponÃ­vel</p>
               <p className="text-2xl font-black tracking-tight mt-1">
-                {visible ? formatBRL(balance) : 'R$ ••••••'}
+                {visible ? formatBRL(balance) : 'R$ â€¢â€¢â€¢â€¢â€¢â€¢'}
               </p>
             </div>
             <button
@@ -253,16 +253,16 @@ export function DigitalPage() {
             </button>
           </div>
           <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between gap-3 text-sm">
-            <span className="text-white/45">Próximo vencimento</span>
+            <span className="text-white/45">PrÃ³ximo vencimento</span>
             <span className="font-semibold text-right">
-              {visible ? `${due} · parcela em dia` : '••/••/••••••'}
+              {visible ? `${due} Â· parcela em dia` : 'â€¢â€¢/â€¢â€¢/â€¢â€¢â€¢â€¢â€¢â€¢'}
             </span>
           </div>
         </section>
 
         <section className="mt-6">
           <h2 className="text-sm font-semibold text-white/60 mb-3">
-            Serviços da conta
+            ServiÃ§os da conta
           </h2>
           <div className="space-y-2">
             {SERVICES.map((service) => {
@@ -296,7 +296,7 @@ export function DigitalPage() {
           }`}
         >
           <div className="rounded-2xl bg-primary px-5 py-3 text-center text-sm font-semibold text-[#0f1712] shadow-lg">
-            Para liberar esta função, faça o saque via PIX primeiro
+            Para liberar esta funÃ§Ã£o, faÃ§a o saque via PIX primeiro
           </div>
         </div>
       </div>
@@ -311,14 +311,14 @@ export function DigitalPage() {
             className="flex flex-col items-center gap-1 py-1 text-primary"
           >
             <House size={20} />
-            <span className="text-[11px] font-semibold">Início</span>
+            <span className="text-[11px] font-semibold">InÃ­cio</span>
           </button>
           <button
             type="button"
             onClick={openSheet}
             className="flex flex-col items-center gap-1 py-1 text-white/45"
           >
-            <ArrowDown size={20} />
+            <ArrowDownToLine size={20} />
             <span className="text-[11px]">Saque</span>
           </button>
           <button
