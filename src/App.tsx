@@ -8,6 +8,7 @@ import { ContaPage } from './pages/ContaPage'
 import { CpfPage } from './pages/CpfPage'
 import { DadosPage } from './pages/DadosPage'
 import { DiaPage } from './pages/DiaPage'
+import { DigitalPage } from './pages/DigitalPage'
 import { EnderecoPage } from './pages/EnderecoPage'
 import { LandingPage } from './pages/LandingPage'
 import { RendaPage } from './pages/RendaPage'
@@ -28,15 +29,16 @@ export default function App() {
       <Route path="/endereco" element={<EnderecoPage />} />
       <Route path="/conta" element={<ContaPage />} />
       <Route path="/abrir" element={<AbrindoPage />} />
+      <Route path="/digital" element={<DigitalPage />} />
       <Route
-        path="/digital"
+        path="/seguro"
         element={
           <ComingSoonPage
-            eyebrow="Conta digital"
-            title="Sua conta digital"
-            subtitle="Área do cliente."
+            eyebrow="Proteção"
+            title="Seguro"
+            subtitle="Proteja o seu empréstimo."
             progress={100}
-            backTo="/"
+            backTo="/digital"
           />
         }
       />

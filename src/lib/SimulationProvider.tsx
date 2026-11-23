@@ -32,6 +32,9 @@ const initialState: SimulationData = {
   uf: '',
   email: '',
   password: '',
+  bank: '',
+  pixKey: '',
+  pixKeyType: '',
 }
 
 export function SimulationProvider({ children }: { children: ReactNode }) {

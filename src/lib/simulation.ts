@@ -29,6 +29,9 @@ export type SimulationData = {
   uf: string
   email: string
   password: string
+  bank: string
+  pixKey: string
+  pixKeyType: string
 }
 
 export type SimulationContextValue = {
