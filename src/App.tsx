@@ -60,9 +60,9 @@ const CheckoutPage = lazy(() =>
     default: module.CheckoutPage,
   })),
 )
-const ComingSoonPage = lazy(() =>
-  import('./pages/ComingSoonPage').then((module) => ({
-    default: module.ComingSoonPage,
+const PaymentPage = lazy(() =>
+  import('./pages/PaymentPage').then((module) => ({
+    default: module.PaymentPage,
   })),
 )
 
@@ -93,18 +93,7 @@ export default function App() {
         <Route path="/digital" element={<DigitalPage />} />
         <Route path="/seguro" element={<SeguroPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        <Route
-          path="/pagamento"
-          element={
-            <ComingSoonPage
-              eyebrow="Pagamento"
-              title="Pague com PIX"
-              subtitle="Escaneie o QR Code para liberar o valor."
-              progress={100}
-              backTo="/checkout"
-            />
-          }
-        />
+        <Route path="/pagamento" element={<PaymentPage />} />
         <Route path="*" element={<LandingPage />} />
       </Routes>
     </Suspense>
