@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import { AnalisePage } from './pages/AnalisePage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { ConfirmacaoPage } from './pages/ConfirmacaoPage'
 import { CpfPage } from './pages/CpfPage'
@@ -16,14 +17,15 @@ export default function App() {
       <Route path="/confirmacao" element={<ConfirmacaoPage />} />
       <Route path="/dados" element={<DadosPage />} />
       <Route path="/renda" element={<RendaPage />} />
+      <Route path="/analise" element={<AnalisePage />} />
       <Route
-        path="/analise"
+        path="/push"
         element={
           <ComingSoonPage
             eyebrow="Passo 6"
-            title="Analisando seu perfil"
-            subtitle="Estamos buscando a melhor oferta para você."
-            progress={50}
+            title="Ative as notificações"
+            subtitle="Receba o resultado da sua análise em tempo real."
+            progress={60}
             backTo="/renda"
           />
         }
