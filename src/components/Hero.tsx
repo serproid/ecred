@@ -1,153 +1,101 @@
-import { Logo } from './Logo'
-import {
-  ArrowDownIcon,
-  BoltIcon,
-  CheckIcon,
-  CrossIcon,
-} from './icons'
+import { motion } from 'framer-motion'
+import { Check, Zap } from 'lucide-react'
+import { Header } from './Header'
+import { LiveFeed } from './LiveFeed'
+import { TransferCard } from './TransferCard'
 
-function TransferCard() {
-  return (
-    <div className="transfer__wrap">
-      <div className="transfer">
-        <div className="transfer__top">
-          <span className="transfer__icon">
-            <ArrowDownIcon />
-          </span>
-          <div>
-            <p className="transfer__title">Transferência Recebida</p>
-            <p className="transfer__time">Agora mesmo</p>
-          </div>
-        </div>
-
-        <div className="transfer__amount">
-          <span>Valor recebido</span>
-          <strong>R$ 15.000,00</strong>
-        </div>
-
-        <div className="transfer__rows">
-          <div>
-            <span>Remetente</span>
-            <strong>Ecred Pagamentos</strong>
-          </div>
-          <div>
-            <span>Instituição</span>
-            <strong>Banco Genético S.A.</strong>
-          </div>
-        </div>
-
-        <button type="button" className="transfer__btn">
-          Ver comprovante
-        </button>
-      </div>
-
-      <div className="approved">
-        <span className="approved__check">
-          <CheckIcon size={16} />
-        </span>
-        <div>
-          <strong>Aprovado</strong>
-          <span>Em 2 minutos</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function LiveFeed() {
-  return (
-    <div className="live">
-      <div className="live__head">
-        <span className="live__dot" />
-        <span>AO VIVO</span>
-        <span className="live__count">429 pessoas acabando agora</span>
-      </div>
-      <ul className="live__list">
-        <li>
-          <span className="live__ico live__ico--no">
-            <CrossIcon />
-          </span>
-          <div className="live__text">
-            <p>Pedro C. não passou na análise desta vez</p>
-            <span>Porto Alegre, RS</span>
-          </div>
-        </li>
-        <li>
-          <span className="live__ico live__ico--ok">
-            <CheckIcon />
-          </span>
-          <div className="live__text">
-            <p>Pedro C. recebeu R$ 2.124,53 via Pix</p>
-            <span>Porto Alegre, RS</span>
-          </div>
-        </li>
-        <li>
-          <span className="live__ico live__ico--ok">
-            <CheckIcon />
-          </span>
-          <div className="live__text">
-            <p>João S. recebeu R$ 7.392,00 via Pix</p>
-            <span>São Paulo, SP</span>
-          </div>
-        </li>
-      </ul>
-    </div>
-  )
-}
+const highlights = ['Aprova negativado', 'Sem fiador', 'Pix em 10 min']
 
 export function Hero() {
   return (
-    <header className="hero">
-      <div className="hero__bg" aria-hidden="true" />
-      <div className="hero__pattern" aria-hidden="true" />
-
-      <div className="site-header container">
-        <Logo />
+    <section className="relative pb-16 md:pb-32 overflow-hidden bg-[#0b1410]">
+      <div className="absolute inset-0 overflow-hidden z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_15%_0%,rgba(180,240,69,0.18),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_100%_100%,rgba(180,240,69,0.10),transparent_60%)]" />
+        <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_35%,#000_50%,transparent_100%)]" />
+        <div className="absolute top-[-12%] left-[-6%] w-[45%] h-[45%] bg-primary/25 blur-[140px] rounded-full" />
+        <div className="absolute bottom-[-14%] right-[-6%] w-[38%] h-[38%] bg-emerald-500/15 blur-[130px] rounded-full" />
       </div>
 
-      <div className="hero__layout container">
-        <div className="hero__left">
-          <span className="hero__badge">
-            <BoltIcon size={13} />
-            Crédito pessoal pré-aprovado
-          </span>
+      <div className="relative z-10">
+        <Header />
+      </div>
 
-          <h1 className="hero__title">
-            Até R$ 20.000
-            <span className="lime">direto no seu PIX</span>
-          </h1>
+      <div className="container mx-auto px-4 relative z-10 pt-10 md:pt-14">
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+          <div className="flex-1 text-center lg:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-sm font-medium mb-6">
+                <Zap size={16} className="text-primary fill-primary" />
+                <span>Crédito pessoal pré-aprovado</span>
+              </div>
 
-          <p className="hero__sub">
-            Simule grátis sem sair de casa e receba via Pix,{' '}
-            <strong>mesmo negativado.</strong> Crédito rápido, com parcelas que
-            cabem no seu bolso.
-          </p>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-6 leading-[1.1]">
+                Até R$ 20.000 <br className="hidden md:block" />
+                <span className="text-primary relative inline-block">
+                  direto no seu PIX
+                  <svg
+                    className="absolute w-full h-3 -bottom-1 left-0 text-primary opacity-70"
+                    viewBox="0 0 200 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M2 10C50 3 150 2 198 8"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+              </h1>
 
-          <button type="button" className="btn btn--lime hero__cta">
-            Simular meu crédito
-          </button>
+              <p className="text-lg md:text-xl text-white/70 mb-10 max-w-xl mx-auto lg:mx-0">
+                Simule grátis sem sair de casa e receba via Pix,{' '}
+                <span className="text-primary font-semibold">
+                  mesmo negativado
+                </span>
+                . Crédito rápido, com parcelas que cabem no seu bolso.
+              </p>
 
-          <ul className="hero__checks">
-            <li>
-              <CheckIcon /> Aprova negativado
-            </li>
-            <li>
-              <CheckIcon /> Sem fiador
-            </li>
-            <li>
-              <CheckIcon /> Pix em 10 min
-            </li>
-          </ul>
-        </div>
+              <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+                <a
+                  href="/valor"
+                  className="btn-alive inline-flex items-center justify-center whitespace-nowrap w-full sm:w-auto bg-primary text-[#0f1712] font-bold h-14 px-8 text-lg rounded-full shadow-[0_0_30px_rgba(180,240,69,0.3)] hover:shadow-[0_0_40px_rgba(180,240,69,0.5)] hover:scale-105 transition-all"
+                >
+                  Simular meu crédito
+                </a>
+              </div>
 
-        <div className="hero__right">
-          <TransferCard />
+              <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 text-sm text-white/70">
+                {highlights.map((label) => (
+                  <div className="flex items-center gap-1.5" key={label}>
+                    <Check
+                      size={15}
+                      className="text-primary shrink-0"
+                      strokeWidth={3}
+                    />
+                    <span className="whitespace-nowrap">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="flex-1 w-full max-w-md mx-auto lg:max-w-none relative">
+            <TransferCard />
+          </div>
         </div>
       </div>
 
-      <div className="live-wrap container">
+      <div className="mt-16 md:mt-20 relative z-10">
         <LiveFeed />
       </div>
-    </header>
+    </section>
   )
 }

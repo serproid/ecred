@@ -1,27 +1,50 @@
+import { getBrandName } from '../lib/brand'
 import { Logo } from './Logo'
 
 export function Footer() {
   return (
-    <footer className="site-footer">
-      <div className="site-footer__inner">
-        <Logo />
-        <nav className="site-footer__links">
-          <a href="#simular">Simular</a>
-          <a href="#privacidade">Política de Privacidade</a>
-          <a href="#termos">Termos de Uso</a>
-        </nav>
-        <div className="site-footer__legal">
+    <footer className="bg-[#0f1712] text-white/60 py-12 border-t border-[#1a231d]">
+      <div className="container mx-auto px-4 flex flex-col items-center text-center">
+        <a href="/" className="inline-flex items-center mb-8">
+          <Logo variant="dark" className="text-3xl" />
+        </a>
+
+        <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 mb-8 text-sm font-medium">
+          <a
+            href="/valor"
+            className="text-white hover:text-primary transition-colors"
+          >
+            Simular
+          </a>
+          <a
+            href="/privacidade"
+            className="text-white hover:text-primary transition-colors"
+          >
+            Política de Privacidade
+          </a>
+          <a
+            href="/termos"
+            className="text-white hover:text-primary transition-colors"
+          >
+            Termos de Uso
+          </a>
+        </div>
+
+        <div className="w-full max-w-3xl h-px bg-white/10 mb-8" />
+
+        <div className="space-y-3 text-xs max-w-4xl">
           <p>
-            CNPJ 78.567.904/0001-49 · Taxa a partir de 0,81% a.m. · CET informado
-            antes da contratação.
+            CNPJ 78.013.904/0001-49 · Taxas a partir de 0,81% a.m. · CET
+            informado antes da contratação
           </p>
           <p>
-            A Ecred nunca cobra valores antecipados pela liberação de crédito.
+            A {getBrandName()} nunca cobra valores antecipados para liberar
+            crédito.
+          </p>
+          <p className="pt-2 opacity-50">
+            © 2026 {getBrandName()} Serviços Financeiros S.A.
           </p>
         </div>
-        <p className="site-footer__copy">
-          © 2026 Ecred Serviços Financeiros S.A.
-        </p>
       </div>
     </footer>
   )
