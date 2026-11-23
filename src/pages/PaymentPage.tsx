@@ -87,11 +87,6 @@ export function PaymentPage() {
           return
         }
 
-        if (payload?.checkoutUrl) {
-          window.location.assign(String(payload.checkoutUrl))
-          return
-        }
-
         if (!payload?.code) {
           setErrorMessage('Não foi possível gerar o PIX. Tente novamente.')
           setPhase('error')
