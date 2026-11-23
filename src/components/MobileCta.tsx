@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 export function MobileCta() {
   const [visible, setVisible] = useState(false)
@@ -16,12 +17,12 @@ export function MobileCta() {
         visible ? 'translate-y-0' : 'translate-y-full'
       }`}
     >
-      <a
-        href="/valor"
+      <Link
+        to="/valor"
         className="btn-alive flex items-center justify-center w-full bg-primary text-[#0f1712] font-bold h-13 py-4 text-base rounded-full shadow-[0_0_30px_rgba(180,240,69,0.35)]"
       >
         Simular meu crédito
-      </a>
+      </Link>
     </div>
   )
 }

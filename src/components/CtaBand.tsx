@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { QrCode, ShieldCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export function CtaBand() {
   return (
@@ -21,12 +22,12 @@ export function CtaBand() {
             <p className="text-white/60 text-sm mb-5 max-w-xl mx-auto">
               Simulação gratuita e resposta na hora.
             </p>
-            <a
-              href="/valor"
+            <Link
+              to="/valor"
               className="inline-flex items-center justify-center whitespace-nowrap bg-primary hover:bg-primary/90 text-[#0f1712] font-bold h-12 px-7 text-base rounded-full shadow-[0_0_30px_rgba(180,240,69,0.35)] hover:shadow-[0_0_45px_rgba(180,240,69,0.55)] hover:scale-105 transition-all"
             >
               Simular agora, leva 1 minuto
-            </a>
+            </Link>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 md:gap-x-6 gap-y-1.5 text-[11px] md:text-xs text-white/55">
               <span className="flex items-center gap-1.5">
                 <QrCode size={13} className="text-primary shrink-0" />
