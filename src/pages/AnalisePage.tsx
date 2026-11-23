@@ -31,7 +31,7 @@ export function AnalisePage() {
       window.setTimeout(() => setStep(2), 1800),
       window.setTimeout(() => setStep(3), 2700),
       window.setTimeout(() => setStep(4), 3600),
-      window.setTimeout(() => navigate('/push'), DURATION * 1000),
+      window.setTimeout(() => navigate('/aprovacao'), DURATION * 1000),
     ]
 
     return () => {

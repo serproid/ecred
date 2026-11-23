@@ -16,6 +16,17 @@ export type SimulationData = {
   salary: string
   noIncome: boolean
   incomeDay: number
+  approvedAmount: number
+  paymentDay: number
+  cep: string
+  addressRevealed: boolean
+  street: string
+  number: string
+  noNumber: boolean
+  complement: string
+  district: string
+  city: string
+  uf: string
 }
 
 export type SimulationContextValue = {

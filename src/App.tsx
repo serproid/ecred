@@ -1,9 +1,12 @@
 import { Route, Routes } from 'react-router-dom'
 import { AnalisePage } from './pages/AnalisePage'
+import { AprovacaoPage } from './pages/AprovacaoPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { ConfirmacaoPage } from './pages/ConfirmacaoPage'
 import { CpfPage } from './pages/CpfPage'
 import { DadosPage } from './pages/DadosPage'
+import { DiaPage } from './pages/DiaPage'
+import { EnderecoPage } from './pages/EnderecoPage'
 import { LandingPage } from './pages/LandingPage'
 import { RendaPage } from './pages/RendaPage'
 import { ValorPage } from './pages/ValorPage'
@@ -18,15 +21,18 @@ export default function App() {
       <Route path="/dados" element={<DadosPage />} />
       <Route path="/renda" element={<RendaPage />} />
       <Route path="/analise" element={<AnalisePage />} />
+      <Route path="/aprovacao" element={<AprovacaoPage />} />
+      <Route path="/dia" element={<DiaPage />} />
+      <Route path="/endereco" element={<EnderecoPage />} />
       <Route
-        path="/push"
+        path="/conta"
         element={
           <ComingSoonPage
-            eyebrow="Passo 6"
-            title="Ative as notificações"
-            subtitle="Receba o resultado da sua análise em tempo real."
-            progress={60}
-            backTo="/renda"
+            eyebrow="Último passo"
+            title="Crie sua conta digital"
+            subtitle="É por ela que você acessa o saldo e realiza o saque via PIX."
+            progress={96}
+            backTo="/endereco"
           />
         }
       />

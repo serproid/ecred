@@ -19,6 +19,17 @@ const initialState: SimulationData = {
   salary: '',
   noIncome: false,
   incomeDay: 0,
+  approvedAmount: 0,
+  paymentDay: 0,
+  cep: '',
+  addressRevealed: false,
+  street: '',
+  number: '',
+  noNumber: false,
+  complement: '',
+  district: '',
+  city: '',
+  uf: '',
 }
 
 export function SimulationProvider({ children }: { children: ReactNode }) {
