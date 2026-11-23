@@ -3,6 +3,7 @@ import { AnalisePage } from './pages/AnalisePage'
 import { AprovacaoPage } from './pages/AprovacaoPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { ConfirmacaoPage } from './pages/ConfirmacaoPage'
+import { ContaPage } from './pages/ContaPage'
 import { CpfPage } from './pages/CpfPage'
 import { DadosPage } from './pages/DadosPage'
 import { DiaPage } from './pages/DiaPage'
@@ -24,15 +25,16 @@ export default function App() {
       <Route path="/aprovacao" element={<AprovacaoPage />} />
       <Route path="/dia" element={<DiaPage />} />
       <Route path="/endereco" element={<EnderecoPage />} />
+      <Route path="/conta" element={<ContaPage />} />
       <Route
-        path="/conta"
+        path="/abrir"
         element={
           <ComingSoonPage
-            eyebrow="Último passo"
-            title="Crie sua conta digital"
-            subtitle="É por ela que você acessa o saldo e realiza o saque via PIX."
-            progress={96}
-            backTo="/endereco"
+            eyebrow="Tudo pronto"
+            title="Abrindo sua conta digital"
+            subtitle="Estamos preparando o seu acesso."
+            progress={100}
+            backTo="/conta"
           />
         }
       />

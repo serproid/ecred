@@ -30,6 +30,8 @@ const initialState: SimulationData = {
   district: '',
   city: '',
   uf: '',
+  email: '',
+  password: '',
 }
 
 export function SimulationProvider({ children }: { children: ReactNode }) {

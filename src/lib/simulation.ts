@@ -27,6 +27,8 @@ export type SimulationData = {
   district: string
   city: string
   uf: string
+  email: string
+  password: string
 }
 
 export type SimulationContextValue = {
