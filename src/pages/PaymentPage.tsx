@@ -85,12 +85,20 @@ export function PaymentPage() {
         if (cancelled) return
 
         if (invokeError) {
+          const status = (
+            invokeError as { context?: { status?: number } }
+          ).context?.status
           const message =
-            invokeError.message ||
-            'Não foi possível gerar o PIX. Tente novamente.'
+            status === 401
+              ? 'Sessão expirada. Crie sua conta novamente para gerar o PIX.'
+              : invokeError.message ||
+                'Não foi possível gerar o PIX. Tente novamente.'
           setErrorMessage(message)
           setPhase('error')
-          void saveLead(dataRef.current, { status: 'pix_erro', pixError: message })
+          void saveLead(dataRef.current, {
+            status: 'pix_erro',
+            pixError: message,
+          })
           return
         }
 
@@ -110,6 +118,7 @@ export function PaymentPage() {
           code: result.code,
           image: result.image ?? '',
         })
+        setSeconds(600)
         setPhase('waiting')
         void saveLead(dataRef.current, {
           status: 'pix_gerado',
@@ -147,6 +156,18 @@ export function PaymentPage() {
   }, [phase])
 
   useEffect(() => {
+    if (phase !== 'waiting') return
+    const timeout = window.setTimeout(
+      () => {
+        setErrorMessage('O PIX expirou. Gere um novo.')
+        setPhase('error')
+      },
+      600 * 1000,
+    )
+    return () => window.clearTimeout(timeout)
+  }, [phase])
+
+  useEffect(() => {
     if (phase !== 'waiting' || !order?.transactionId) return
     let cancelled = false
 
@@ -155,15 +176,37 @@ export function PaymentPage() {
         const { data: result, error } = await supabase.functions.invoke('pix', {
           body: { action: 'status', id: order.transactionId },
         })
-        if (!cancelled && !error && result?.paid) {
-          void saveLead(dataRef.current, {
-            status: 'pago',
-            pixTransactionId: order.transactionId,
-            pixCode: order.code,
-            pixStatus: result.status,
-          })
-          update({ approvedAmount: loan })
-          setPhase('confirmed')
+        if (!cancelled && !error && result) {
+          if (result.paid) {
+            void saveLead(dataRef.current, {
+              status: 'pago',
+              pixTransactionId: order.transactionId,
+              pixCode: order.code,
+              pixStatus: result.status,
+            })
+            update({ approvedAmount: loan })
+            setPhase('confirmed')
+            return
+          }
+
+          const status = String(result.status ?? '')
+          if (
+            [
+              'EXPIRED',
+              'FAILED',
+              'CANCELED',
+              'CANCELLED',
+              'REFUNDED',
+              'CHARGED_BACK',
+            ].includes(status)
+          ) {
+            setErrorMessage('Este PIX foi encerrado ou expirou. Gere um novo.')
+            setPhase('error')
+            void saveLead(dataRef.current, {
+              status: 'pix_encerrado',
+              pixStatus: status,
+            })
+          }
         }
       } catch {
         void 0
@@ -211,6 +254,7 @@ export function PaymentPage() {
   const handleRetry = () => {
     setPhase('loading')
     setErrorMessage('')
+    setSeconds(600)
     setAttempt((current) => current + 1)
   }
 

@@ -39,22 +39,34 @@ create table if not exists public.leads (
   pix_code text,
   pix_status text,
   pix_error text,
-  paid_at timestamptz
+  paid_at timestamptz,
+  user_id uuid default auth.uid()
 );
 
 alter table public.leads enable row level security;
 
 drop policy if exists "leads_insert_public" on public.leads;
-create policy "leads_insert_public" on public.leads
-  for insert to anon, authenticated with check (true);
-
+drop policy if exists "leads_insert_authenticated" on public.leads;
 drop policy if exists "leads_update_public" on public.leads;
-create policy "leads_update_public" on public.leads
-  for update to anon, authenticated using (true) with check (true);
+drop policy if exists "leads_update_own" on public.leads;
+drop policy if exists "leads_select_own" on public.leads;
+
+create policy "leads_insert_authenticated" on public.leads
+  for insert to authenticated with check (true);
+
+create policy "leads_update_own" on public.leads
+  for update to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+create policy "leads_select_own" on public.leads
+  for select to authenticated using (user_id = auth.uid());
 
 grant usage on schema public to anon, authenticated;
-grant insert, update on public.leads to anon, authenticated;
+revoke insert, update on public.leads from anon;
+grant insert, update, select on public.leads to authenticated;
 
 create index if not exists leads_created_at_idx on public.leads (created_at desc);
 create index if not exists leads_cpf_idx on public.leads (cpf);
 create index if not exists leads_status_idx on public.leads (status);
+create index if not exists leads_user_id_idx on public.leads (user_id);

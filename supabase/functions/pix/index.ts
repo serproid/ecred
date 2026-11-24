@@ -71,7 +71,7 @@ Deno.serve(async (request) => {
     try {
       const response = await sigilo(
         `/gateway/transactions?id=${encodeURIComponent(id)}`,
-        { method: 'GET' },
+        { method: 'GET', signal: AbortSignal.timeout(15000) },
       )
       const data = await response.json().catch(() => null)
       if (!response.ok || !data) {
@@ -148,9 +148,25 @@ Deno.serve(async (request) => {
     const response = await sigilo('/gateway/pix/receive', {
       method: 'POST',
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(45000),
     })
     const data = await response.json().catch(() => null)
     const { code, image } = extractPix(data ?? {})
+
+    if (
+      data?.status &&
+      ['FAILED', 'REJECTED', 'CANCELED', 'CANCELLED'].includes(
+        String(data.status),
+      )
+    ) {
+      return json({
+        ok: false,
+        error:
+          data?.errorDescription ??
+          'Não foi possível gerar o PIX. Tente novamente.',
+        errorCode: data?.errorCode ?? data?.status,
+      })
+    }
 
     if (!response.ok || !data || !code) {
       return json({
