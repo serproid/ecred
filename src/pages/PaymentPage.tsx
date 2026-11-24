@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Smartphone,
 } from 'lucide-react'
+import * as QRCode from 'qrcode'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
@@ -61,6 +62,7 @@ export function PaymentPage() {
   const [copied, setCopied] = useState(false)
   const [seconds, setSeconds] = useState(600)
   const [redirect, setRedirect] = useState(3)
+  const [qrDataUrl, setQrDataUrl] = useState('')
   const copyTimer = useRef<number | null>(null)
 
   useEffect(() => {
@@ -240,6 +242,33 @@ export function PaymentPage() {
     [],
   )
 
+  useEffect(() => {
+    if (!order?.code || order.image) return
+    let cancelled = false
+
+    QRCode.toDataURL(order.code, {
+      width: 480,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQrDataUrl(
+            `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+              order.code,
+            )}`,
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [order?.code, order?.image])
+
   const handleCopy = async () => {
     if (!order?.code) return
     try {
@@ -262,11 +291,7 @@ export function PaymentPage() {
     seconds % 60,
   ).padStart(2, '0')}`
 
-  const qrSrc =
-    order?.image ||
-    (order?.code
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(order.code)}`
-      : '')
+  const qrSrc = order?.image || qrDataUrl
 
   const shownPhase: Phase = configError ? 'error' : phase
   const shownError = configError || errorMessage
