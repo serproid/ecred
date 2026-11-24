@@ -5,35 +5,108 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { ProgressBar } from '../components/ProgressBar'
-import { formatCpf, isValidCpf, onlyDigits } from '../lib/formatters'
+import {
+  formatCpf,
+  formatDate,
+  isValidCpf,
+  onlyDigits,
+} from '../lib/formatters'
 import { useSimulation } from '../lib/simulation'
+import { supabase } from '../lib/supabase'
+
+const CURRENT_YEAR = new Date().getFullYear()
+
+function isValidBirthDate(value: string) {
+  const digits = onlyDigits(value)
+  if (digits.length !== 8) return false
+
+  const day = Number(digits.slice(0, 2))
+  const month = Number(digits.slice(2, 4))
+  const year = Number(digits.slice(4, 8))
+
+  if (year < 1900 || year > CURRENT_YEAR) return false
+  if (month < 1 || month > 12) return false
+  if (day < 1 || day > 31) return false
+
+  const date = new Date(year, month - 1, day)
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  )
+}
 
 export function CpfPage() {
   const navigate = useNavigate()
   const { data, update } = useSimulation()
   const [touched, setTouched] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   const digits = onlyDigits(data.cpf)
-  const error = isValidCpf(data.cpf)
+  const cpfError = isValidCpf(data.cpf)
     ? ''
     : digits.length !== 11
       ? 'Digite um CPF válido com 11 dígitos.'
       : 'CPF inválido. Confira os números digitados.'
 
-  const visibleError = touched ? error : ''
+  const birthError = isValidBirthDate(data.birthDate)
+    ? ''
+    : data.birthDate.trim()
+      ? 'Data de nascimento inválida.'
+      : 'Informe sua data de nascimento.'
 
-  const handleSubmit = (event: FormEvent) => {
+  const visibleCpfError = touched ? cpfError : ''
+  const visibleBirthError = touched ? birthError : ''
+
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setTouched(true)
-    if (loading || error) return
+    setApiError('')
+
+    if (loading || cpfError || birthError) return
 
     setLoading(true)
-    window.setTimeout(() => {
-      update({ phone: '' })
-      setLoading(false)
+
+    try {
+      const { data: result, error: invokeError } =
+        await supabase.functions.invoke('cpf', {
+          body: { cpf: digits, birthDate: data.birthDate },
+        })
+
+      if (invokeError) {
+        setApiError('Não foi possível consultar o CPF. Tente novamente.')
+        setLoading(false)
+        return
+      }
+
+      if (!result?.ok) {
+        setApiError(result?.error ?? 'Não foi possível consultar o CPF.')
+        setLoading(false)
+        return
+      }
+
+      if (result.blocked) {
+        setApiError('Não foi possível prosseguir com este CPF.')
+        setLoading(false)
+        return
+      }
+
+      update({
+        cpfLocked: true,
+        name: result.name || data.name,
+        birthDate: result.birthDate || data.birthDate,
+        cpfSituation: result.situation ?? '',
+        cpfDeathYear: result.deathYear ?? null,
+        cpfChecked: true,
+        phone: '',
+      })
+
       navigate('/confirmacao')
-    }, 600)
+    } catch {
+      setApiError('Não foi possível consultar o CPF. Tente novamente.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -73,7 +146,8 @@ export function CpfPage() {
                 Informe seu CPF
               </h1>
               <p className="text-muted-foreground max-w-md mx-auto">
-                Precisamos do seu CPF para prosseguir com a análise.
+                Confirme seu CPF e data de nascimento para prosseguir com a
+                análise.
               </p>
             </div>
 
@@ -92,16 +166,40 @@ export function CpfPage() {
                   }
                   maxLength={14}
                   className={`flex w-full border px-3 py-1 shadow-sm transition-colors placeholder:text-muted-foreground/45 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 h-14 bg-background text-lg tracking-wide rounded-xl ${
-                    visibleError
+                    visibleCpfError
                       ? 'border-red-500 focus-visible:ring-red-500 focus-visible:border-red-500'
                       : 'border-border focus-visible:ring-primary focus-visible:border-primary'
                   }`}
                 />
-                {visibleError ? (
+                {visibleCpfError ? (
                   <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
-                    <CircleAlert size={14} className="shrink-0" />
-                    {' '}
-                    {visibleError}
+                    <CircleAlert size={14} className="shrink-0" />{' '}
+                    {visibleCpfError}
+                  </p>
+                ) : null}
+
+                <label className="block text-sm font-medium text-foreground mb-2 mt-5">
+                  Data de nascimento
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="DD/MM/AAAA"
+                  value={data.birthDate}
+                  onChange={(event) =>
+                    update({ birthDate: formatDate(event.target.value) })
+                  }
+                  maxLength={10}
+                  className={`flex w-full border px-3 py-1 shadow-sm transition-colors placeholder:text-muted-foreground/45 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 h-14 bg-background text-lg tracking-wide rounded-xl ${
+                    visibleBirthError
+                      ? 'border-red-500 focus-visible:ring-red-500 focus-visible:border-red-500'
+                      : 'border-border focus-visible:ring-primary focus-visible:border-primary'
+                  }`}
+                />
+                {visibleBirthError ? (
+                  <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                    <CircleAlert size={14} className="shrink-0" />{' '}
+                    {visibleBirthError}
                   </p>
                 ) : null}
 
@@ -113,6 +211,12 @@ export function CpfPage() {
                   </p>
                 </div>
               </div>
+
+              {apiError ? (
+                <p className="text-red-500 text-sm mb-3 text-center flex items-center justify-center gap-1">
+                  <CircleAlert size={14} className="shrink-0" /> {apiError}
+                </p>
+              ) : null}
 
               <button
                 type="submit"

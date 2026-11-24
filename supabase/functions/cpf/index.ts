@@ -1,0 +1,105 @@
+const API_URL =
+  Deno.env.get('CPFHUB_API_URL') ?? 'https://api.cpfhub.io/cpf/realtime'
+const API_KEY = Deno.env.get('CPFHUB_API_KEY') ?? ''
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'content-type': 'application/json; charset=utf-8' },
+  })
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, '')
+}
+
+Deno.serve(async (request) => {
+  if (request.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+  if (request.method !== 'POST') {
+    return json({ ok: false, error: 'Método não permitido.' }, 405)
+  }
+
+  if (!API_KEY) {
+    return json(
+      { ok: false, error: 'Consulta de CPF não configurada.' },
+      500,
+    )
+  }
+
+  let body: any
+  try {
+    body = await request.json()
+  } catch {
+    return json({ ok: false, error: 'JSON inválido.' }, 400)
+  }
+
+  const cpf = onlyDigits(String(body?.cpf ?? ''))
+  const birthDate = String(body?.birthDate ?? '').trim()
+
+  if (cpf.length !== 11) {
+    return json({ ok: false, error: 'Informe um CPF válido.' }, 400)
+  }
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(birthDate)) {
+    return json({ ok: false, error: 'Informe a data de nascimento.' }, 400)
+  }
+
+  let response: Response
+  try {
+    response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+      body: JSON.stringify({ cpf, birthDate }),
+      signal: AbortSignal.timeout(60000),
+    })
+  } catch {
+    return json({
+      ok: false,
+      error:
+        'A consulta demorou para responder. Tente novamente em alguns segundos.',
+    })
+  }
+
+  const payload = await response.json().catch(() => null)
+
+  if (!response.ok || !payload) {
+    const message =
+      typeof payload?.error === 'string'
+        ? payload.error
+        : payload?.error?.message ?? 'Não foi possível consultar o CPF.'
+
+    return json({
+      ok: false,
+      error: message,
+      status: response.status,
+      retryAfter: response.headers.get('retry-after') ?? '',
+    })
+  }
+
+  const info = payload.data ?? {}
+  const deathYear =
+    typeof info.deathYear === 'number' ? info.deathYear : null
+  const situation = String(info.situation ?? '')
+  const blocked =
+    deathYear !== null || situation.toUpperCase() === 'TITULAR FALECIDO'
+
+  return json({
+    ok: true,
+    name: String(info.name ?? ''),
+    birthDate: String(info.birthDate ?? birthDate),
+    situation,
+    deathYear,
+    blocked,
+  })
+})

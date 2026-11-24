@@ -6,6 +6,9 @@ export type SimulationData = {
   installments: number
   cpf: string
   cpfLocked: boolean
+  cpfSituation: string
+  cpfDeathYear: number | null
+  cpfChecked: boolean
   name: string
   birthDate: string
   gender: string

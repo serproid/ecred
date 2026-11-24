@@ -2,3 +2,6 @@ project_id = "iprumnyfjbrpnqiwxscm"
 
 [functions.pix]
 verify_jwt = true
+
+[functions.cpf]
+verify_jwt = false
