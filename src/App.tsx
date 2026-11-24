@@ -65,6 +65,11 @@ const PaymentPage = lazy(() =>
     default: module.PaymentPage,
   })),
 )
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage').then((module) => ({
+    default: module.LoginPage,
+  })),
+)
 
 function PageFallback() {
   return (
@@ -94,6 +99,7 @@ export default function App() {
         <Route path="/seguro" element={<SeguroPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/pagamento" element={<PaymentPage />} />
+        <Route path="/entrar" element={<LoginPage />} />
         <Route path="*" element={<LandingPage />} />
       </Routes>
     </Suspense>

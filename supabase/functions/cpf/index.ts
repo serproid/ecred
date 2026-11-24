@@ -1,6 +1,11 @@
 const API_URL =
   Deno.env.get('CPFHUB_API_URL') ?? 'https://api.cpfhub.io/cpf/realtime'
 const API_KEY = Deno.env.get('CPFHUB_API_KEY') ?? ''
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+const RATE_LIMIT = 8
+const RATE_WINDOW_SECONDS = 60
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +23,65 @@ function json(data: unknown, status = 200) {
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, '')
+}
+
+async function serviceFetch(path: string, init: RequestInit = {}) {
+  return fetch(`${SUPABASE_URL}${path}`, {
+    ...init,
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      'content-type': 'application/json',
+      ...(init.headers as Record<string, string> | undefined),
+    },
+  })
+}
+
+async function checkRateLimit(
+  key: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<{ allowed: boolean; retryAfter: number }> {
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    return { allowed: true, retryAfter: 0 }
+  }
+
+  try {
+    const response = await serviceFetch('/rest/v1/rpc/check_rate_limit', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_key: key,
+        p_limit: limit,
+        p_window_seconds: windowSeconds,
+      }),
+      signal: AbortSignal.timeout(8000),
+    })
+    if (!response.ok) return { allowed: true, retryAfter: 0 }
+
+    const data = await response.json()
+    return {
+      allowed: Boolean(data?.allowed),
+      retryAfter: Number(data?.retryAfter ?? 0),
+    }
+  } catch {
+    return { allowed: true, retryAfter: 0 }
+  }
+}
+
+async function cpfExists(cpf: string): Promise<boolean> {
+  if (!SUPABASE_URL || !SERVICE_KEY) return false
+
+  try {
+    const response = await serviceFetch(
+      `/rest/v1/profiles?cpf=eq.${encodeURIComponent(cpf)}&select=id`,
+      { method: 'GET', signal: AbortSignal.timeout(8000) },
+    )
+    if (!response.ok) return false
+    const rows = await response.json()
+    return Array.isArray(rows) && rows.length > 0
+  } catch {
+    return false
+  }
 }
 
 Deno.serve(async (request) => {
@@ -50,6 +114,35 @@ Deno.serve(async (request) => {
   }
   if (!/^\d{2}\/\d{2}\/\d{4}$/.test(birthDate)) {
     return json({ ok: false, error: 'Informe a data de nascimento.' }, 400)
+  }
+
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    'unknown'
+
+  const rate = await checkRateLimit(
+    `cpf:${ip}`,
+    RATE_LIMIT,
+    RATE_WINDOW_SECONDS,
+  )
+
+  if (!rate.allowed) {
+    return json({
+      ok: false,
+      error: 'Muitas tentativas. Aguarde alguns segundos.',
+      retryAfter: rate.retryAfter,
+      rateLimited: true,
+    })
+  }
+
+  if (await cpfExists(cpf)) {
+    return json({
+      ok: false,
+      existing: true,
+      error: 'CPF já cadastrado. Faça login na sua conta.',
+    })
   }
 
   let response: Response

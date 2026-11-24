@@ -80,6 +80,11 @@ export function CpfPage() {
         return
       }
 
+      if (result?.existing) {
+        navigate('/entrar', { state: { reason: 'existing' } })
+        return
+      }
+
       if (!result?.ok) {
         setApiError(result?.error ?? 'Não foi possível consultar o CPF.')
         setLoading(false)

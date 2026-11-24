@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FieldError } from '../components/FieldError'
 import { Logo } from '../components/Logo'
 import { ProgressBar } from '../components/ProgressBar'
+import { onlyDigits } from '../lib/formatters'
 import { useSimulation } from '../lib/simulation'
 import { supabase } from '../lib/supabase'
 
@@ -49,6 +50,12 @@ export function ContaPage() {
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          data: {
+            cpf: onlyDigits(data.cpf),
+            name: data.name,
+          },
+        },
       })
 
       if (error) {
@@ -64,6 +71,11 @@ export function ContaPage() {
             setSubmitting(false)
             return
           }
+        } else if (/database error|duplicate|profiles_cpf/i.test(error.message)) {
+          setAuthError('CPF já cadastrado. Faça login na sua conta.')
+          setSubmitting(false)
+          navigate('/entrar', { state: { reason: 'existing' } })
+          return
         } else {
           setAuthError(error.message)
           setSubmitting(false)
@@ -194,6 +206,16 @@ export function ContaPage() {
                 {submitting ? 'Criando conta...' : 'Criar conta e acessar'}
                 <ArrowRight size={20} />
               </button>
+
+              <p className="text-center text-sm text-muted-foreground mt-5">
+                Já tem conta?{' '}
+                <Link
+                  to="/entrar"
+                  className="text-[#2e5535] font-semibold underline"
+                >
+                  Entrar
+                </Link>
+              </p>
             </form>
           </div>
         </motion.div>
