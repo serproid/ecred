@@ -7,6 +7,7 @@ import { FieldError } from '../components/FieldError'
 import { Logo } from '../components/Logo'
 import { ProgressBar } from '../components/ProgressBar'
 import { useSimulation } from '../lib/simulation'
+import { supabase } from '../lib/supabase'
 
 const baseInput =
   'flex w-full border py-1 shadow-sm transition-colors placeholder:text-muted-foreground/45 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 h-14 bg-background text-lg rounded-xl'
@@ -22,20 +23,59 @@ export function ContaPage() {
   const { data, update } = useSimulation()
   const [showPassword, setShowPassword] = useState(false)
   const [touched, setTouched] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [authError, setAuthError] = useState('')
 
   const errors = {
     email: isEmailValid(data.email) ? '' : 'Informe um e-mail válido.',
     password:
-      data.password.length === 0 ? 'Crie uma senha para continuar.' : '',
+      data.password.length < 6
+        ? 'A senha deve ter pelo menos 6 caracteres.'
+        : '',
   }
   const hasError = Object.values(errors).some(Boolean)
   const errorFor = (key: keyof typeof errors) =>
     touched ? errors[key] : ''
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setTouched(true)
-    if (!hasError) navigate('/abrir')
+    if (hasError || submitting) return
+
+    setSubmitting(true)
+    setAuthError('')
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      })
+
+      if (error) {
+        if (/already registered|already exists/i.test(error.message)) {
+          const { error: signInError } = await supabase.auth.signInWithPassword(
+            {
+              email: data.email,
+              password: data.password,
+            },
+          )
+          if (signInError) {
+            setAuthError('E-mail já cadastrado. Confira a senha e tente novamente.')
+            setSubmitting(false)
+            return
+          }
+        } else {
+          setAuthError(error.message)
+          setSubmitting(false)
+          return
+        }
+      }
+
+      navigate('/abrir')
+    } catch {
+      setAuthError('Não foi possível criar a conta. Tente novamente.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -136,11 +176,22 @@ export function ContaPage() {
                 </div>
               </div>
 
+              {authError ? (
+                <p className="text-red-500 text-sm mb-3 text-center">
+                  {authError}
+                </p>
+              ) : null}
+
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 bg-primary text-[#0f1712] font-bold h-16 text-lg md:text-xl rounded-full transition-all hover:bg-primary/90 hover:scale-[1.02] shadow-[0_0_30px_rgba(180,240,69,0.25)]"
+                disabled={submitting}
+                className={`w-full inline-flex items-center justify-center gap-2 bg-primary text-[#0f1712] font-bold h-16 text-lg md:text-xl rounded-full transition-all ${
+                  submitting
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:bg-primary/90 hover:scale-[1.02] shadow-[0_0_30px_rgba(180,240,69,0.25)]'
+                }`}
               >
-                Criar conta e acessar
+                {submitting ? 'Criando conta...' : 'Criar conta e acessar'}
                 <ArrowRight size={20} />
               </button>
             </form>

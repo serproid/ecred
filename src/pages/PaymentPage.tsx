@@ -1,4 +1,4 @@
-﻿import { motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   AlarmClock,
   Check,
@@ -13,8 +13,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { onlyDigits } from '../lib/formatters'
+import { saveLead } from '../lib/leads'
 import { formatBRL } from '../lib/loan'
 import { useSimulation } from '../lib/simulation'
+import { supabase } from '../lib/supabase'
 
 type Phase = 'loading' | 'waiting' | 'confirmed' | 'error'
 
@@ -35,6 +37,10 @@ const HOW_TO_PAY = [
 export function PaymentPage() {
   const navigate = useNavigate()
   const { data, update } = useSimulation()
+  const dataRef = useRef(data)
+  useEffect(() => {
+    dataRef.current = data
+  }, [data])
 
   const amount = data.checkoutTotal > 0 ? data.checkoutTotal : 0
   const loan =
@@ -63,44 +69,54 @@ export function PaymentPage() {
 
     const run = async () => {
       try {
-        const response = await fetch('/api/pix', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            amount,
-            client: {
-              name: data.name || 'Cliente',
-              email: data.email,
-              phone: data.phone,
-              document,
+        const { data: result, error: invokeError } =
+          await supabase.functions.invoke('pix', {
+            body: {
+              action: 'create',
+              amount,
+              client: {
+                name: data.name || 'Cliente',
+                email: data.email,
+                phone: data.phone,
+                document,
+              },
             },
-          }),
-        })
-        const payload = await response.json()
+          })
         if (cancelled) return
 
-        if (!response.ok) {
-          setErrorMessage(
-            payload?.error ?? 'Não foi possível gerar o PIX. Tente novamente.',
-          )
+        if (invokeError) {
+          const message =
+            invokeError.message ||
+            'Não foi possível gerar o PIX. Tente novamente.'
+          setErrorMessage(message)
           setPhase('error')
+          void saveLead(dataRef.current, { status: 'pix_erro', pixError: message })
           return
         }
 
-        if (!payload?.code) {
-          setErrorMessage('Não foi possível gerar o PIX. Tente novamente.')
+        if (!result?.ok || !result?.code) {
+          const message =
+            result?.error ?? 'Não foi possível gerar o PIX. Tente novamente.'
+          setErrorMessage(message)
           setPhase('error')
+          void saveLead(dataRef.current, { status: 'pix_erro', pixError: message })
           return
         }
 
         setOrder({
-          transactionId: payload.transactionId ?? '',
-          identifier: payload.identifier ?? '',
-          amount: Number(payload.amount ?? amount),
-          code: payload.code,
-          image: payload.image ?? '',
+          transactionId: result.transactionId ?? '',
+          identifier: result.identifier ?? '',
+          amount: Number(result.amount ?? amount),
+          code: result.code,
+          image: result.image ?? '',
         })
         setPhase('waiting')
+        void saveLead(dataRef.current, {
+          status: 'pix_gerado',
+          pixTransactionId: result.transactionId ?? '',
+          pixCode: result.code,
+          pixStatus: result.status ?? '',
+        })
       } catch {
         if (cancelled) return
         setErrorMessage('Falha de conexão ao gerar o PIX. Tente novamente.')
@@ -136,11 +152,16 @@ export function PaymentPage() {
 
     const check = async () => {
       try {
-        const response = await fetch(
-          `/api/pix/status?id=${encodeURIComponent(order.transactionId)}`,
-        )
-        const payload = await response.json()
-        if (!cancelled && payload?.paid) {
+        const { data: result, error } = await supabase.functions.invoke('pix', {
+          body: { action: 'status', id: order.transactionId },
+        })
+        if (!cancelled && !error && result?.paid) {
+          void saveLead(dataRef.current, {
+            status: 'pago',
+            pixTransactionId: order.transactionId,
+            pixCode: order.code,
+            pixStatus: result.status,
+          })
           update({ approvedAmount: loan })
           setPhase('confirmed')
         }
@@ -155,7 +176,7 @@ export function PaymentPage() {
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [phase, order?.transactionId, update, loan])
+  }, [phase, order?.transactionId, order?.code, update, loan])
 
   useEffect(() => {
     if (phase !== 'confirmed') return

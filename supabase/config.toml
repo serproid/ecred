@@ -1,0 +1,4 @@
+project_id = "iprumnyfjbrpnqiwxscm"
+
+[functions.pix]
+verify_jwt = true

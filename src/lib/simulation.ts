@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
 
 export type SimulationData = {
+  leadId: string
   amount: number
   installments: number
   cpf: string

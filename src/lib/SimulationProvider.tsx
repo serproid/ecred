@@ -4,6 +4,7 @@ import { SimulationContext } from './simulation'
 import type { SimulationContextValue, SimulationData } from './simulation'
 
 const initialState: SimulationData = {
+  leadId: '',
   amount: 10000,
   installments: 12,
   cpf: '',
@@ -44,8 +45,18 @@ const initialState: SimulationData = {
   checkoutBumpIds: [],
 }
 
+function createLeadId() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 export function SimulationProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<SimulationData>(initialState)
+  const [data, setData] = useState<SimulationData>(() => ({
+    ...initialState,
+    leadId: createLeadId(),
+  }))
 
   const value = useMemo<SimulationContextValue>(
     () => ({

@@ -1,4 +1,0 @@
-SIGILOPAY_PUBLIC_KEY=coloque_a_public_key_aqui
-SIGILOPAY_SECRET_KEY=coloque_a_secret_key_aqui
-SIGILOPAY_API_BASE=https://app.sigilopay.com.br/api/v1
-# SIGILOPAY_CALLBACK_URL=https://seudominio.com/api/sigilopay/webhook
